@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>Análisis de Gastos Universitarios ITBA</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 40px 0;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .chart-section {
+            background: white;
+            margin-bottom: 30px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .chart-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+          .chart-container {
+            position: relative;
+            height: 450px;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        
+        .chart-container > div {
+            height: 100% !important;
+            width: 100% !important;
+        }
+        
+        /* Plotly specific styling */
+        .plotly .modebar {
+            background: rgba(255, 255, 255, 0.9) !important;
+            border-radius: 4px !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+        }
+        
+        .plotly .modebar-btn {
+            color: #666 !important;
+        }
+        
+        .plotly .modebar-btn:hover {
+            background: rgba(103, 126, 234, 0.1) !important;
+            color: #667eea !important;
+        }
+        
+        .insights {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .insights h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .insights ul {
+            list-style: none;
+        }
+        
+        .insights li {
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .insights li:before {
+            content: "📊";
+            position: absolute;
+            left: 0;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .data-table th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .data-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .data-table tr:hover {
+            background: #e3f2fd;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            color: white;
+            opacity: 0.8;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .chart-container {
+                height: 300px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        
+        .period-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .period-info div {
+            text-align: center;
+        }
+        
+        .period-info .label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .period-info .value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-chart-line"></i> Análisis de Gastos Universitarios ITBA</h1>
+            <p>Evolución de cuotas y correlación con indicadores económicos</p>
+        </header>        <div class="period-info">
+            <div>
+                <div class="label">Período Analizado</div>
+                <div class="value">May 2024 - May 2025</div>
+            </div>
+            <div>
+                <div class="label">Total Cuotas</div>
+                <div class="value">12 cuotas</div>
+            </div>
+            <div>
+                <div class="label">Cuota Actual</div>
+                <div class="value">$752,900</div>
+            </div>
+            <div>
+                <div class="label">Incremento Total</div>
+                <div class="value">79.9%</div>
+            </div>
+        </div>        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                <div class="stat-value">79.9%</div>
+                <div class="stat-label">Incremento Total de la Cuota</div>
+            </div>            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                <div class="stat-value">12.1%</div>
+                <div class="stat-label">Dólar Blue Acumulado</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-university"></i></div>
+                <div class="stat-value">27.3%</div>
+                <div class="stat-label">Dólar Oficial Acumulado</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-percentage"></i></div>
+                <div class="stat-value">37.6%</div>
+                <div class="stat-label">IPC Acumulado</div>
+            </div>
+        </div>        <div class="chart-section">
+            <h2 class="chart-title">Evolución Temporal de las Cuotas</h2>
+            <div class="chart-container">
+                <div id="tuitionChart"></div>
+            </div><div class="insights">
+                <h3>📈 Insights Clave</h3>
+                <ul>
+                    <li>La cuota más baja fue de $418,446 (May 2024)</li>
+                    <li>La cuota más alta es de $752,900 (May 2025)</li>
+                    <li>Incremento promedio mensual: 6.8%</li>
+                    <li>Mayor incremento: 32% (Mayo a Julio 2024)</li>
+                </ul>
+            </div>
+        </div>        <div class="chart-section">
+            <h2 class="chart-title">Correlación con Indicadores Económicos</h2>
+            <div class="chart-container">
+                <div id="economicChart"></div>
+            </div><div class="insights">
+                <h3>🔗 Correlaciones</h3>
+                <ul>
+                    <li>Mayor correlación con Dólar Blue (1.000 según análisis)</li>
+                    <li>Correlación con Dólar Oficial: 0.850</li>
+                    <li>Correlación con IPC: -0.164</li>
+                    <li>Los aumentos de cuota siguen más al dólar que a la inflación</li>
+                </ul>
+            </div>
+        </div>        <div class="chart-section">
+            <h2 class="chart-title">Valor de la Cuota en Dólares</h2>
+            <div class="chart-container">
+                <div id="usdChart"></div>
+            </div><div class="insights">
+                <h3>💱 Análisis en USD</h3>
+                <ul>
+                    <li>Valor promedio en USD Blue: USD 519</li>
+                    <li>Valor promedio en USD Oficial: USD 622</li>
+                    <li>Diferencia promedio: USD 103</li>
+                    <li>En USD Blue, la cuota mostró alta volatilidad</li>
+                </ul>
+            </div>
+        </div>        <div class="chart-section">
+            <h2 class="chart-title">Variaciones Mensuales Comparativas</h2>
+            <div class="chart-container">
+                <div id="variationChart"></div>
+            </div><div class="insights">
+                <h3>📊 Variaciones</h3>
+                <ul>
+                    <li>La cuota aumentó 79.9% en total vs 37.6% del IPC</li>
+                    <li>Incremento por encima de la inflación: 42.3%</li>
+                    <li>El dólar blue subió 12.1% en el mismo período</li>
+                    <li>El dólar oficial subió 27.3% en el mismo período</li>
+                </ul>
+            </div>        </div>        <div class="chart-section">
+            <h2 class="chart-title">Monto por Número de Cuota</h2>
+            <div class="chart-container">
+                <div id="cuotaBarChart"></div>
+            </div>
+            <div class="insights">
+                <h3>📈 Progresión por Cuota</h3>
+                <ul>
+                    <li>Incremento total de la cuota 1 a la 11: 36.3%</li>
+                    <li>Los aumentos ocurren cada 2 meses aproximadamente</li>
+                    <li>Mayor salto: de la cuota 0 a la 1 (+32%)</li>
+                    <li>Incrementos posteriores más moderados (5-9%)</li>
+                </ul>
+            </div>
+        </div>        <div class="chart-section">
+            <h2 class="chart-title">Brecha Cambiaria</h2>
+            <div class="chart-container">
+                <div id="gapChart"></div>
+            </div>
+            <div class="insights">
+                <h3>💱 Análisis de Brecha</h3>
+                <ul>
+                    <li>Brecha promedio: 32.9%</li>
+                    <li>Máxima brecha: 58.1% (Jul 2024)</li>
+                    <li>Mínima brecha: 3.0% (Abr 2025)</li>
+                    <li>Tendencia general hacia la convergencia de cotizaciones</li>
+                </ul>
+            </div>
+        </div>        <div class="chart-section">
+            <h2 class="chart-title">Variaciones en USD (Dólar Blue)</h2>
+            <div class="chart-container">
+                <div id="usdBlueVariationChart"></div>
+            </div>
+            <div class="insights">
+                <h3>💵 Volatilidad en USD Blue</h3>
+                <ul>
+                    <li>Variación total en USD Blue: +60.5%</li>
+                    <li>Mayor aumento: +22.6% (Nov 2024)</li>
+                    <li>Mayor disminución: -10.0% (May 2025)</li>
+                    <li>En USD, la cuota es más volátil que en pesos</li>
+                </ul>
+            </div>
+        </div>        <div class="chart-section">
+            <h2 class="chart-title">Comparación de Aumentos Acumulados</h2>
+            <div class="chart-container">
+                <div id="cumulativeChart"></div>
+            </div>
+            <div class="insights">
+                <h3>📊 Aumentos Totales</h3>
+                <ul>
+                    <li>Cuota ITBA: +79.9% (total del período)</li>
+                    <li>Dólar Blue: +12.1% (total del período)</li>
+                    <li>Dólar Oficial: +27.3% (total del período)</li>
+                    <li>IPC Acumulado: 37.6% (inflación total)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="chart-section">
+            <h2 class="chart-title">Tabla de Datos Detallada</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Cuota</th>
+                        <th>Monto (miles $)</th>
+                        <th>USD Blue</th>
+                        <th>USD Oficial</th>
+                        <th>Var Cuota (%)</th>
+                        <th>Var Dólar Blue (%)</th>
+                        <th>IPC (%)</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTableBody">
+                </tbody>
+            </table>
+        </div>        <div class="highlight">
+            <h3>🎯 Principales Hallazgos</h3>
+            <p><strong>Impacto Económico:</strong> La cuota del ITBA aumentó 79.9% en total, significativamente más que la inflación acumulada del 37.6%, representando un incremento real del 42.3% por encima del IPC.</p>
+            <p><strong>Estabilidad en USD:</strong> El valor en USD mostró alta volatilidad, especialmente en dólar blue, con variaciones que van desde USD 380 hasta USD 649, reflejando el impacto de la política cambiaria.</p>
+            <p><strong>Correlación Cambiaria:</strong> Los aumentos de cuota muestran fuerte correlación con ambas cotizaciones del dólar, sugiriendo una indexación parcial al tipo de cambio más que a la inflación local.</p>
+            <p><strong>Patrón de Aumentos:</strong> Los incrementos siguen un patrón escalonado cada 2 meses aproximadamente, con el mayor salto inicial del 32% entre mayo y julio 2024.</p>
+        </div>
+
+        <footer class="footer">
+            <p><i class="fas fa-code"></i> Análisis realizado con Python, Pandas y Matplotlib | <i class="fas fa-calendar"></i> Mayo 2025</p>
+        </footer>
+    </div>    <script>
+        // Datos del análisis (actualizado con datos completos del notebook)
+        const data = {
+            dates: ['05/2024', '07/2024', '08/2024', '09/2024', '10/2024', '11/2024', '12/2024', '01/2025', '02/2025', '03/2025', '04/2025', '05/2025'],
+            tuition: [418446, 552349, 552349, 591014.4, 591014.4, 644205.6, 644205.6, 682857.6, 682857.6, 717000, 717000, 752900],
+            cuotaNumbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+            dolarBlue: [1035, 1455, 1345, 1270, 1170, 1115, 1085, 1230, 1205, 1220, 1355, 1160],
+            dolarOficial: [884.25, 920.5, 939.8, 959.7, 979.4, 997.8, 1018.8, 1040.3, 1057.5, 1067.1, 1078.4, 1126.0],
+            ipc: [4.2, 4.0, 4.2, 3.5, 2.7, 2.4, 2.7, 2.2, 2.4, 3.7, 2.8, 2.8],
+            usdBlue: [404.3, 379.6, 410.7, 465.4, 505.1, 577.8, 593.7, 555.2, 566.7, 587.7, 529.2, 649.0],
+            usdOficial: [473.2, 600.1, 587.7, 615.9, 603.4, 645.7, 632.3, 656.4, 645.8, 671.9, 664.9, 668.6],
+            variationTuition: [0, 32.0, 0, 7.0, 0, 9.0, 0, 6.0, 0, 5.0, 0, 5.0],
+            variationDolarBlue: [0, 40.6, -7.6, -5.6, -7.9, -4.7, -2.7, 13.4, -2.0, 1.2, 11.1, -14.4],
+            variationIPC: [4.2, 4.0, 4.2, 3.5, 2.7, 2.4, 2.7, 2.2, 2.4, 3.7, 2.8, 2.8],
+            variationDolarOficial: [0, 4.1, 2.1, 2.1, 2.1, 1.9, 2.1, 2.1, 1.7, 0.9, 1.1, 4.4]
+        };
+
+        // Configuración común para todos los gráficos
+        const commonConfig = {
+            responsive: true,
+            displayModeBar: true,
+            modeBarButtonsToRemove: ['toImage', 'sendDataToCloud', 'lasso2d', 'select2d'],
+            displaylogo: false
+        };
+
+        const commonLayout = {
+            font: {
+                family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif',
+                size: 12,
+                color: '#333'
+            },
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            hovermode: 'x unified',
+            hoverlabel: {
+                bgcolor: 'rgba(255,255,255,0.95)',
+                bordercolor: '#ccc',
+                font: { size: 12 }
+            }
+        };        // 1. Gráfico de evolución de cuotas
+        const tuitionTrace = {
+            x: data.dates,
+            y: data.tuition,
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Monto de Cuota',
+            line: {
+                color: '#8B5CF6', // Violeta para cuota
+                width: 3,
+                shape: 'spline'
+            },
+            marker: {
+                color: '#8B5CF6',
+                size: 8,
+                line: { color: '#fff', width: 2 }
+            },
+            fill: 'tonexty',
+            fillcolor: 'rgba(139, 92, 246, 0.1)',
+            hovertemplate: '<b>%{x}</b><br>Cuota: $%{y:,.0f}<extra></extra>'
+        };
+
+        Plotly.newPlot('tuitionChart', [tuitionTrace], {
+            ...commonLayout,
+            title: {
+                text: 'Evolución Temporal de las Cuotas',
+                font: { size: 16, color: '#333' }
+            },
+            xaxis: { title: 'Período' },
+            yaxis: {
+                title: 'Monto ($)',
+                tickformat: '$,.0f'
+            }
+        }, commonConfig);        // 2. Gráfico de indicadores económicos (múltiples ejes Y)
+        const economicTraces = [
+            {
+                x: data.dates,
+                y: data.tuition.map(x => x/1000),
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Cuota (miles $)',
+                line: { color: '#8B5CF6', width: 3 },
+                marker: { color: '#8B5CF6', size: 6 },
+                yaxis: 'y',
+                hovertemplate: '<b>%{x}</b><br>Cuota: $%{y:.0f}k<extra></extra>'
+            },
+            {
+                x: data.dates,
+                y: data.dolarBlue,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Dólar Blue',
+                line: { color: '#3B82F6', width: 3 },
+                marker: { color: '#3B82F6', size: 6 },
+                yaxis: 'y2',
+                hovertemplate: '<b>%{x}</b><br>USD Blue: $%{y}<extra></extra>'
+            },
+            {
+                x: data.dates,
+                y: data.dolarOficial,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Dólar Oficial',
+                line: { color: '#10B981', width: 3 },
+                marker: { color: '#10B981', size: 6 },
+                yaxis: 'y2',
+                hovertemplate: '<b>%{x}</b><br>USD Oficial: $%{y}<extra></extra>'
+            }
+        ];
+
+        Plotly.newPlot('economicChart', economicTraces, {
+            ...commonLayout,
+            title: {
+                text: 'Correlación con Indicadores Económicos',
+                font: { size: 16, color: '#333' }
+            },
+            xaxis: { title: 'Período' },            yaxis: {
+                title: 'Cuota (miles $)',
+                side: 'left',
+                color: '#8B5CF6'
+            },
+            yaxis2: {
+                title: 'Cotización ($)',
+                side: 'right',
+                overlaying: 'y',
+                color: '#3B82F6'
+            },
+            legend: { x: 0.02, y: 0.98 }
+        }, commonConfig);        // 3. Gráfico de valor en USD
+        const usdTraces = [
+            {
+                x: data.dates,
+                y: data.usdBlue,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'USD Blue',
+                line: { color: '#3B82F6', width: 3 },
+                marker: { color: '#3B82F6', size: 6 },
+                fill: 'tozeroy',
+                fillcolor: 'rgba(59, 130, 246, 0.1)',
+                hovertemplate: '<b>%{x}</b><br>USD Blue: $%{y:.0f}<extra></extra>'
+            },
+            {
+                x: data.dates,
+                y: data.usdOficial,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'USD Oficial',
+                line: { color: '#10B981', width: 3 },
+                marker: { color: '#10B981', size: 6 },
+                hovertemplate: '<b>%{x}</b><br>USD Oficial: $%{y:.0f}<extra></extra>'
+            }
+        ];
+
+        Plotly.newPlot('usdChart', usdTraces, {
+            ...commonLayout,
+            title: {
+                text: 'Valor de la Cuota en Dólares',
+                font: { size: 16, color: '#333' }
+            },
+            xaxis: { title: 'Período' },
+            yaxis: {
+                title: 'Valor (USD)',
+                tickformat: '$,.0f'
+            }
+        }, commonConfig);        // 4. Gráfico de variaciones (barras agrupadas)
+        const variationTraces = [
+            {
+                x: data.dates.slice(1),
+                y: data.variationTuition.slice(1),
+                type: 'bar',
+                name: 'Var Cuota (%)',
+                marker: { color: '#8B5CF6', opacity: 0.8 },
+                hovertemplate: '<b>%{x}</b><br>Var Cuota: %{y}%<extra></extra>'
+            },
+            {
+                x: data.dates.slice(1),
+                y: data.variationDolarBlue.slice(1),
+                type: 'bar',
+                name: 'Var Dólar Blue (%)',
+                marker: { color: '#3B82F6', opacity: 0.8 },
+                hovertemplate: '<b>%{x}</b><br>Var Dólar Blue: %{y}%<extra></extra>'
+            },
+            {
+                x: data.dates.slice(1),
+                y: data.variationDolarOficial.slice(1),
+                type: 'bar',
+                name: 'Var Dólar Oficial (%)',
+                marker: { color: '#10B981', opacity: 0.8 },
+                hovertemplate: '<b>%{x}</b><br>Var Dólar Oficial: %{y}%<extra></extra>'
+            },
+            {
+                x: data.dates.slice(1),
+                y: data.variationIPC.slice(1),
+                type: 'bar',
+                name: 'IPC (%)',
+                marker: { color: '#F59E0B', opacity: 0.8 },
+                hovertemplate: '<b>%{x}</b><br>IPC: %{y}%<extra></extra>'
+            }
+        ];
+
+        Plotly.newPlot('variationChart', variationTraces, {
+            ...commonLayout,
+            title: {
+                text: 'Variaciones Mensuales Comparativas',
+                font: { size: 16, color: '#333' }
+            },
+            xaxis: { title: 'Período' },
+            yaxis: {
+                title: 'Variación (%)',
+                ticksuffix: '%'
+            },
+            barmode: 'group'
+        }, commonConfig);
+
+        // 5. Gráfico de monto por cuota (barras)
+        const cuotaBarTrace = {
+            x: data.cuotaNumbers.map(x => x === 0 ? 'Inicial' : `Cuota ${x}`),
+            y: data.tuition,
+            type: 'bar',
+            name: 'Monto ($)',            marker: {
+                color: data.tuition,
+                colorscale: [
+                    [0, '#8B5CF6'],
+                    [1, '#A855F7']
+                ],
+                showscale: false,
+                line: { color: '#333', width: 1 }
+            },
+            hovertemplate: '<b>%{x}</b><br>Monto: $%{y:,.0f}<extra></extra>'
+        };
+
+        Plotly.newPlot('cuotaBarChart', [cuotaBarTrace], {
+            ...commonLayout,
+            title: {
+                text: 'Monto por Número de Cuota',
+                font: { size: 16, color: '#333' }
+            },
+            xaxis: { title: 'Número de Cuota' },
+            yaxis: {
+                title: 'Monto ($)',
+                tickformat: '$,.0f'
+            },
+            showlegend: false
+        }, commonConfig);
+
+        // 6. Gráfico de brecha cambiaria
+        const gapData = data.dates.map((date, i) => {
+            return ((data.dolarBlue[i] - data.dolarOficial[i]) / data.dolarOficial[i]) * 100;
+        });
+
+        const gapTrace = {
+            x: data.dates,
+            y: gapData,
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Brecha Cambiaria (%)',
+            line: {
+                color: '#A23B72',
+                width: 3,
+                shape: 'spline'
+            },
+            marker: {
+                color: '#A23B72',
+                size: 8,
+                line: { color: '#fff', width: 2 }
+            },
+            fill: 'tozeroy',
+            fillcolor: 'rgba(162, 59, 114, 0.1)',
+            hovertemplate: '<b>%{x}</b><br>Brecha: %{y:.1f}%<extra></extra>'
+        };
+
+        Plotly.newPlot('gapChart', [gapTrace], {
+            ...commonLayout,
+            title: {
+                text: 'Brecha Cambiaria',
+                font: { size: 16, color: '#333' }
+            },
+            xaxis: { title: 'Período' },
+            yaxis: {
+                title: 'Brecha (%)',
+                ticksuffix: '%'
+            }
+        }, commonConfig);
+
+        // 7. Gráfico de variaciones USD Blue
+        const usdBlueVariations = data.usdBlue.map((val, i) => {
+            if (i === 0) return 0;
+            return ((val - data.usdBlue[i-1]) / data.usdBlue[i-1]) * 100;
+        });
+
+        const usdBlueVariationTrace = {
+            x: data.dates.slice(1),
+            y: usdBlueVariations.slice(1),
+            type: 'bar',
+            name: 'Variación USD Blue (%)',
+            marker: {
+                color: usdBlueVariations.slice(1).map(val => val >= 0 ? '#22C55E' : '#EF4444'),
+                opacity: 0.8,
+                line: { color: '#333', width: 1 }
+            },
+            hovertemplate: '<b>%{x}</b><br>Variación: %{y:.1f}%<extra></extra>'
+        };
+
+        Plotly.newPlot('usdBlueVariationChart', [usdBlueVariationTrace], {
+            ...commonLayout,
+            title: {
+                text: 'Variaciones en USD (Dólar Blue)',
+                font: { size: 16, color: '#333' }
+            },
+            xaxis: { title: 'Período' },
+            yaxis: {
+                title: 'Variación (%)',
+                ticksuffix: '%',
+                zeroline: true,
+                zerolinecolor: '#333',
+                zerolinewidth: 2
+            },
+            showlegend: false
+        }, commonConfig);
+
+        // 8. Gráfico de aumentos acumulados
+        const cumulativeData = {
+            labels: ['Cuota ITBA', 'Dólar Blue', 'Dólar Oficial', 'IPC Acumulado'],
+            values: [79.9, 12.1, 27.3, 37.6]
+        };        const cumulativeTrace = {
+            x: cumulativeData.labels,
+            y: cumulativeData.values,
+            type: 'bar',
+            name: 'Aumento (%)',
+            marker: {
+                color: ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B'],
+                opacity: 0.8,
+                line: { color: '#333', width: 1 }
+            },
+            hovertemplate: '<b>%{x}</b><br>Aumento: %{y}%<extra></extra>'
+        };
+
+        Plotly.newPlot('cumulativeChart', [cumulativeTrace], {
+            ...commonLayout,
+            title: {
+                text: 'Comparación de Aumentos Acumulados',
+                font: { size: 16, color: '#333' }
+            },
+            xaxis: { title: 'Indicador' },
+            yaxis: {
+                title: 'Aumento (%)',
+                ticksuffix: '%'
+            },
+            showlegend: false
+        }, commonConfig);
+
+        // Llenar tabla de datos con datos completos
+        const tableData = [
+            ['05/2024', 0, 418.4, 404, 473, 0, 0, 4.2],
+            ['07/2024', 1, 552.3, 380, 600, 32.0, 40.6, 4.0],
+            ['08/2024', 2, 552.3, 411, 588, 0, -7.6, 4.2],
+            ['09/2024', 3, 591.0, 465, 616, 7.0, -5.6, 3.5],
+            ['10/2024', 4, 591.0, 505, 603, 0, -7.9, 2.7],
+            ['11/2024', 5, 644.2, 578, 646, 9.0, -4.7, 2.4],
+            ['12/2024', 6, 644.2, 594, 632, 0, -2.7, 2.7],
+            ['01/2025', 7, 682.9, 555, 656, 6.0, 13.4, 2.2],
+            ['02/2025', 8, 682.9, 567, 646, 0, -2.0, 2.4],
+            ['03/2025', 9, 717.0, 588, 672, 5.0, 1.2, 3.7],
+            ['04/2025', 10, 717.0, 529, 665, 0, 11.1, 2.8],
+            ['05/2025', 11, 752.9, 649, 669, 5.0, -14.4, 2.8]
+        ];
+
+        const tableBody = document.getElementById('dataTableBody');
+        tableData.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${row[0]}</td>
+                <td>${row[1]}</td>
+                <td>$${row[2]}</td>
+                <td>USD ${row[3]}</td>
+                <td>USD ${row[4]}</td>
+                <td>${row[5]}%</td>
+                <td>${row[6]}%</td>
+                <td>${row[7]}%</td>
+            `;
+            tableBody.appendChild(tr);
+        });
+
+        // Agregar animaciones de entrada para todos los gráficos
+        setTimeout(() => {
+            const chartIds = ['tuitionChart', 'economicChart', 'usdChart', 'variationChart', 
+                             'cuotaBarChart', 'gapChart', 'usdBlueVariationChart', 'cumulativeChart'];
+            
+            chartIds.forEach((id, index) => {
+                setTimeout(() => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.style.opacity = '0';
+                        element.style.transform = 'translateY(20px)';
+                        element.style.transition = 'all 0.6s ease';
+                        
+                        setTimeout(() => {
+                            element.style.opacity = '1';
+                            element.style.transform = 'translateY(0)';
+                        }, 100);
+                    }
+                }, index * 200);
+            });
+        }, 500);
+    </script>
+</body>
+</html>
